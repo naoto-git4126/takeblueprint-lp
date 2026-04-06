@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Takeblueprint | ITコンサルタント・DX推進支援</title>
+  <meta name="description" content="元経済産業省20年・5省庁の行政経験と生成AI実践スキルを持つITコンサルタント。DX推進・AI活用支援・QMS設計を完全リモートで提供します。">
+  <meta name="robots" content="index, follow">
+  <!-- Security: CSP via meta tag (HTTP header not available on GitHub Pages) -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; font-src https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'self'; frame-ancestors 'none';">
+  <meta name="referrer" content="no-referrer-when-downgrade">
+  <!-- Open Graph -->
+  <meta property="og:title" content="Takeblueprint | ITコンサルタント・DX推進支援">
+  <meta property="og:description" content="元経済産業省20年・生成AI実践スキル。DX推進・AI活用支援を完全リモートで。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://takeblueprint.com">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      color: #1e293b;
+      background: #ffffff;
+      line-height: 1.7;
+    }
+    img { max-width: 100%; display: block; }
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; }
+
+    /* ===== Variables ===== */
+    :root {
+      --blue-dark:   #1a3a6b;
+      --blue-main:   #1d4ed8;
+      --blue-light:  #3b82f6;
+      --blue-pale:   #eff6ff;
+      --slate-dark:  #0f172a;
+      --slate-mid:   #475569;
+      --slate-light: #f1f5f9;
+      --white:       #ffffff;
+      --radius:      8px;
+      --shadow:      0 4px 24px rgba(0,0,0,0.08);
+      --max-w:       1000px;
+    }
+
+    /* ===== Layout ===== */
+    .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+    section { padding: 80px 0; }
+    section:nth-child(even) { background: var(--slate-light); }
+
+    /* ===== Navigation ===== */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .nav-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--blue-main);
+      letter-spacing: 0.04em;
+    }
+    .nav-links { display: flex; gap: 28px; }
+    .nav-links a {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--slate-mid);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--blue-main); }
+    .nav-cta {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--white) !important;
+      background: var(--blue-main);
+      padding: 8px 18px;
+      border-radius: 6px;
+      transition: background 0.2s !important;
+    }
+    .nav-cta:hover { background: var(--blue-dark) !important; color: var(--white) !important; }
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 4px;
+      background: none;
+      border: none;
+    }
+    .nav-hamburger span {
+      display: block; width: 24px; height: 2px;
+      background: var(--slate-dark);
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+    .nav-mobile {
+      display: none;
+      flex-direction: column;
+      background: var(--white);
+      border-top: 1px solid #e2e8f0;
+      padding: 16px 24px 20px;
+      gap: 16px;
+    }
+    .nav-mobile a {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--slate-mid);
+      padding: 4px 0;
+    }
+    .nav-mobile .nav-cta {
+      display: inline-block;
+      text-align: center;
+      margin-top: 4px;
+      padding: 10px 20px;
+    }
+    .nav-mobile.open { display: flex; }
+
+    /* ===== Hero ===== */
+    #hero {
+      background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue-main) 60%, var(--blue-light) 100%);
+      color: var(--white);
+      padding: 96px 0 80px;
+      text-align: center;
+    }
+    .hero-tag {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.9);
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+    }
+    .hero-title {
+      font-size: clamp(1.75rem, 5vw, 2.8rem);
+      font-weight: 900;
+      line-height: 1.4;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .hero-title em {
+      font-style: normal;
+      color: #93c5fd;
+    }
+    .hero-sub {
+      font-size: clamp(0.9rem, 2vw, 1.05rem);
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 36px;
+      line-height: 1.9;
+    }
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+    .badge {
+      font-size: 0.8rem;
+      font-weight: 500;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.95);
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+    .hero-btn {
+      display: inline-block;
+      font-size: 1rem;
+      font-weight: 700;
+      background: var(--white);
+      color: var(--blue-main);
+      padding: 14px 36px;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .hero-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.25); }
+
+    /* ===== Section Headings ===== */
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--blue-main);
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 900;
+      color: var(--slate-dark);
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    .section-desc {
+      font-size: 0.95rem;
+      color: var(--slate-mid);
+      margin-bottom: 48px;
+      max-width: 560px;
+    }
+
+    /* ===== Issues (Section 2) ===== */
+    #issues { background: var(--white); }
+    .issues-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .issue-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: var(--slate-light);
+      border-radius: var(--radius);
+      padding: 20px;
+      border-left: 4px solid var(--blue-light);
+    }
+    .issue-icon {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      background: var(--blue-pale);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .issue-text { font-size: 0.9rem; font-weight: 500; line-height: 1.6; }
+
+    /* ===== Strengths (Section 3) ===== */
+    #strengths { background: var(--slate-light); }
+    .strengths-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .strength-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .strength-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0;
+      width: 4px; height: 100%;
+      background: var(--blue-main);
+    }
+    .strength-num {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--blue-pale);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .strength-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--blue-dark);
+      margin-bottom: 10px;
+    }
+    .strength-body { font-size: 0.875rem; color: var(--slate-mid); line-height: 1.8; }
+
+    /* ===== Services (Section 4) ===== */
+    #services { background: var(--white); }
+    .services-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .services-table th {
+      background: var(--blue-dark);
+      color: var(--white);
+      padding: 14px 18px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+    .services-table th:first-child { border-radius: 8px 0 0 0; }
+    .services-table th:last-child  { border-radius: 0 8px 0 0; }
+    .services-table td {
+      padding: 16px 18px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    .services-table tr:last-child td { border-bottom: none; }
+    .services-table tr:nth-child(even) td { background: var(--slate-light); }
+    .service-name { font-weight: 700; color: var(--blue-dark); }
+    .tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: var(--blue-pale);
+      color: var(--blue-main);
+      padding: 3px 10px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+    @media (max-width: 640px) {
+      .services-table thead { display: none; }
+      .services-table tr {
+        display: block;
+        margin-bottom: 16px;
+        border: 1px solid #e2e8f0;
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .services-table td {
+        display: block;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .services-table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--blue-main);
+        margin-bottom: 4px;
+      }
+    }
+
+    /* ===== Profile (Section 5) ===== */
+    #profile { background: var(--slate-light); }
+    .profile-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 40px 36px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 40px;
+      align-items: start;
+    }
+    .profile-left { text-align: center; }
+    .profile-avatar {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue-dark), var(--blue-light));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem;
+      margin: 0 auto 16px;
+      color: white;
+    }
+    .profile-name { font-size: 1.1rem; font-weight: 900; color: var(--slate-dark); }
+    .profile-sub { font-size: 0.8rem; color: var(--slate-mid); margin-top: 4px; }
+    .profile-right h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--blue-dark);
+      margin: 20px 0 10px;
+    }
+    .profile-right h3:first-child { margin-top: 0; }
+    .profile-right p { font-size: 0.9rem; color: var(--slate-mid); line-height: 1.8; }
+    .career-list li {
+      display: flex;
+      gap: 12px;
+      font-size: 0.875rem;
+      color: var(--slate-mid);
+      padding: 8px 0;
+      border-bottom: 1px solid #e2e8f0;
+      line-height: 1.5;
+    }
+    .career-list li:last-child { border-bottom: none; }
+    .career-year {
+      flex-shrink: 0;
+      font-weight: 700;
+      color: var(--blue-main);
+      font-size: 0.8rem;
+      padding-top: 2px;
+    }
+    .skills-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .skill-tag {
+      font-size: 0.78rem;
+      background: var(--blue-pale);
+      color: var(--blue-dark);
+      border: 1px solid #bfdbfe;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    @media (max-width: 640px) {
+      .profile-card {
+        grid-template-columns: 1fr;
+        padding: 28px 20px;
+        gap: 24px;
+      }
+    }
+
+    /* ===== Terms (Section 6) ===== */
+    #terms { background: var(--white); }
+    .terms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .term-item {
+      background: var(--slate-light);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+    }
+    .term-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--blue-main);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+    .term-value { font-size: 0.9rem; font-weight: 700; color: var(--slate-dark); line-height: 1.5; }
+
+    /* ===== Contact (Section 7) ===== */
+    #contact {
+      background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue-main) 100%);
+      color: var(--white);
+      text-align: center;
+    }
+    #contact .section-label { color: #93c5fd; }
+    #contact .section-title { color: var(--white); }
+    #contact .section-desc { color: rgba(255,255,255,0.8); max-width: 480px; margin-left: auto; margin-right: auto; }
+    .contact-options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .contact-btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      background: var(--white);
+      color: var(--blue-main);
+      padding: 14px 32px;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .contact-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+    .contact-btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      background: transparent;
+      color: var(--white);
+      border: 2px solid rgba(255,255,255,0.5);
+      padding: 14px 32px;
+      border-radius: var(--radius);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .contact-btn-secondary:hover { border-color: var(--white); background: rgba(255,255,255,0.08); }
+    .contact-note {
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.65);
+    }
+
+    /* ===== Footer ===== */
+    footer {
+      background: var(--slate-dark);
+      color: rgba(255,255,255,0.5);
+      padding: 28px 0;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    footer a { color: rgba(255,255,255,0.5); }
+    footer a:hover { color: rgba(255,255,255,0.8); }
+
+    /* ===== Utilities ===== */
+    .text-center { text-align: center; }
+    .mt-2  { margin-top: 8px; }
+    .mt-4  { margin-top: 16px; }
+    .mb-0  { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+
+<!-- ===== Navigation ===== -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#hero">Takeblueprint</a>
+    <div class="nav-links" id="navLinks">
+      <a href="#issues">課題</a>
+      <a href="#strengths">強み</a>
+      <a href="#services">サービス</a>
+      <a href="#profile">プロフィール</a>
+      <a href="#contact" class="nav-cta">お問い合わせ</a>
+    </div>
+    <button class="nav-hamburger" id="hamburger" aria-label="メニューを開く" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="nav-mobile" id="navMobile">
+    <a href="#issues">課題</a>
+    <a href="#strengths">強み</a>
+    <a href="#services">サービス</a>
+    <a href="#profile">プロフィール</a>
+    <a href="#contact" class="nav-cta">お問い合わせ</a>
+  </div>
+</nav>
+
+<!-- ===== Hero ===== -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-tag">IT Consultant &amp; DX Specialist</div>
+    <h1 class="hero-title">
+      20年分の行政知見と、<br><em>AIで動く個人事業</em>を。
+    </h1>
+    <p class="hero-sub">
+      元経済産業省・5省庁20年の行政経験 ×<br>
+      生成AI（Claude Code）を活用した業務設計・自動化の実践スキル
+    </p>
+    <div class="hero-badges">
+      <span class="badge">完全リモート対応</span>
+      <span class="badge">インボイス登録事業者</span>
+      <span class="badge">QMS審査員補（ISO 9001）</span>
+      <span class="badge">業務委託・準委任</span>
+    </div>
+    <a href="#contact" class="hero-btn">無料相談・お問い合わせ</a>
+  </div>
+</section>
+
+<!-- ===== Issues ===== -->
+<section id="issues">
+  <div class="container">
+    <div class="section-label">Issues</div>
+    <h2 class="section-title">こんな課題はありませんか？</h2>
+    <p class="section-desc">以下のような状況でお困りの企業・組織の支援を行っています。</p>
+    <div class="issues-grid">
+      <div class="issue-card">
+        <div class="issue-icon">🔍</div>
+        <p class="issue-text">DXを進めたいが、どこから手をつければいいか分からない</p>
+      </div>
+      <div class="issue-card">
+        <div class="issue-icon">🤖</div>
+        <p class="issue-text">AI・生成AIを業務に取り入れたいが、社内に知見がない</p>
+      </div>
+      <div class="issue-card">
+        <div class="issue-icon">🏛️</div>
+        <p class="issue-text">官公庁・公共機関との調整や規制対応に手が回らない</p>
+      </div>
+      <div class="issue-card">
+        <div class="issue-icon">📋</div>
+        <p class="issue-text">ITシステム導入のPMがいない、または失敗した経験がある</p>
+      </div>
+      <div class="issue-card">
+        <div class="issue-icon">📊</div>
+        <p class="issue-text">QMS・品質管理の整備をAI時代に合わせてアップデートしたい</p>
+      </div>
+      <div class="issue-card">
+        <div class="issue-icon">🔗</div>
+        <p class="issue-text">複数のステークホルダーをまとめ、合意形成を進められる人材がいない</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Strengths ===== -->
+<section id="strengths">
+  <div class="container">
+    <div class="section-label">Strengths</div>
+    <h2 class="section-title">Takeblueprintの強み</h2>
+    <p class="section-desc">3つの軸が掛け合わさることで、希少な価値を提供できます。</p>
+    <div class="strengths-grid">
+      <div class="strength-card">
+        <div class="strength-num">01</div>
+        <div class="strength-title">生成AI × 業務設計</div>
+        <p class="strength-body">
+          Claude Codeを活用した自動化・業務プロセス再設計の実践経験。
+          「AIを使う」ではなく「AIが動く仕組みを設計する」支援を提供します。
+          複数システムの設計・実装・運用を独力で完結させた実績あり。
+        </p>
+      </div>
+      <div class="strength-card">
+        <div class="strength-num">02</div>
+        <div class="strength-title">大規模組織 × 合意形成</div>
+        <p class="strength-body">
+          5省庁20年にわたる行政経験。20億円規模のシステム調達に担当者として参画。
+          複数省庁・外部ステークホルダーとの調整・折衝・合意形成を担当してきた
+          実務経験は、民間の大型プロジェクトでも即戦力になります。
+        </p>
+      </div>
+      <div class="strength-card">
+        <div class="strength-num">03</div>
+        <div class="strength-title">QMS × AI管理・ガバナンス</div>
+        <p class="strength-body">
+          ISO 9001等のマネジメントシステムと生成AIの融合知見。
+          「導入して終わり」ではなく、継続的に改善が回る仕組みを設計します。
+          AIガバナンス・品質保証スキームの設計は現時点で希少な領域です。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Services ===== -->
+<section id="services">
+  <div class="container">
+    <div class="section-label">Services</div>
+    <h2 class="section-title">サービス内容</h2>
+    <p class="section-desc">業務委託（準委任）を基本形態として、スポット相談から継続支援まで対応します。</p>
+    <table class="services-table">
+      <thead>
+        <tr>
+          <th style="width:22%">サービス</th>
+          <th>内容</th>
+          <th style="width:22%">形態</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-label="サービス"><span class="service-name">DX推進支援</span></td>
+          <td data-label="内容">業務プロセス分析・改善計画策定・ツール選定支援。現状把握から実行フェーズまで伴走します。</td>
+          <td data-label="形態"><span class="tag">業務委託</span> <span class="tag">スポット</span></td>
+        </tr>
+        <tr>
+          <td data-label="サービス"><span class="service-name">ITコンサルティング</span></td>
+          <td data-label="内容">システム調達・要件定義・PM支援。官公庁・公共系プロジェクトへの対応に特に強みを持ちます。</td>
+          <td data-label="形態"><span class="tag">業務委託</span></td>
+        </tr>
+        <tr>
+          <td data-label="サービス"><span class="service-name">AI活用支援</span></td>
+          <td data-label="内容">生成AI導入計画・ガバナンス設計・社内AIリテラシー向上研修。「何から始めるか」の整理から対応します。</td>
+          <td data-label="形態"><span class="tag">業務委託</span> <span class="tag">研修</span></td>
+        </tr>
+        <tr>
+          <td data-label="サービス"><span class="service-name">QMS × AI設計</span></td>
+          <td data-label="内容">マネジメントシステムへのAI組み込み・品質保証スキーム設計。PDCA×生成AIの実践的フレームワークを提供します。</td>
+          <td data-label="形態"><span class="tag">スポット</span> <span class="tag">継続</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== Profile ===== -->
+<section id="profile">
+  <div class="container">
+    <div class="section-label">Profile</div>
+    <h2 class="section-title">プロフィール</h2>
+    <div class="profile-card">
+      <div class="profile-left">
+        <div class="profile-avatar">T</div>
+        <div class="profile-name">Takeblueprint</div>
+        <div class="profile-sub">個人事業主（2026年4月〜）</div>
+      </div>
+      <div class="profile-right">
+        <h3>経歴</h3>
+        <ul class="career-list">
+          <li>
+            <span class="career-year">2006–2026</span>
+            <span>経済産業省（5省庁出向含む）20年勤務。規制行政・政策立案・危機管理・国際標準化を担当。</span>
+          </li>
+          <li>
+            <span class="career-year">2024–2026</span>
+            <span>経済産業省 国際標準課 係長。ISO/IEC国際標準化政策・多国間調整・交渉を担当。</span>
+          </li>
+          <li>
+            <span class="career-year">2020–2024</span>
+            <span>国土交通省 関東地方整備局 係長。社会インフラ防災・保全管理。約1,000名規模での広域調整。</span>
+          </li>
+          <li>
+            <span class="career-year">2026–</span>
+            <span>Takeblueprint として独立。生成AIを活用した複数システムの設計・実装・運用を行いながらITコンサルティング・DX推進支援を展開中。</span>
+          </li>
+        </ul>
+        <h3>スキル・資格</h3>
+        <div class="skills-wrap">
+          <span class="skill-tag">QMS審査員補（ISO 9001）</span>
+          <span class="skill-tag">Claude Code（生成AI）</span>
+          <span class="skill-tag">Python</span>
+          <span class="skill-tag">GitHub</span>
+          <span class="skill-tag">国際標準化</span>
+          <span class="skill-tag">行政折衝・合意形成</span>
+          <span class="skill-tag">システム調達PM</span>
+          <span class="skill-tag">英語（業務レベル）</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Terms ===== -->
+<section id="terms">
+  <div class="container">
+    <div class="section-label">Terms</div>
+    <h2 class="section-title">稼働条件</h2>
+    <p class="section-desc">料金は規模・内容により応相談です。まずはお気軽にご相談ください。</p>
+    <div class="terms-grid">
+      <div class="term-item">
+        <div class="term-label">稼働形態</div>
+        <div class="term-value">完全リモート<br>（常駐不可）</div>
+      </div>
+      <div class="term-item">
+        <div class="term-label">稼働日数</div>
+        <div class="term-value">週3〜5日<br>（応相談）</div>
+      </div>
+      <div class="term-item">
+        <div class="term-label">契約形態</div>
+        <div class="term-value">業務委託<br>（準委任）</div>
+      </div>
+      <div class="term-item">
+        <div class="term-label">インボイス</div>
+        <div class="term-value">適格請求書<br>発行事業者 登録済</div>
+      </div>
+      <div class="term-item">
+        <div class="term-label">料金目安</div>
+        <div class="term-value">月額応相談<br>（内容・規模による）</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Contact ===== -->
+<section id="contact">
+  <div class="container">
+    <div class="section-label">Contact</div>
+    <h2 class="section-title">お問い合わせ・無料相談</h2>
+    <p class="section-desc">
+      「どんな相談か分からない」「まずは話だけ聞いてほしい」でも大歓迎です。<br>
+      お気軽にご連絡ください。
+    </p>
+    <div class="contact-options">
+      <a href="mailto:info@takeblueprint.com" class="contact-btn-primary">
+        ✉ メールで相談する
+      </a>
+      <a href="https://x.com/takeblueprint" target="_blank" rel="noopener noreferrer" class="contact-btn-secondary">
+        𝕏 DM で相談する
+      </a>
+    </div>
+    <p class="contact-note">通常2営業日以内にご返信します</p>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer>
+  <div class="container">
+    <p>© 2026 Takeblueprint. All rights reserved.</p>
+    <p class="mt-2">
+      <a href="mailto:info@takeblueprint.com">info@takeblueprint.com</a>
+    </p>
+  </div>
+</footer>
+
+<script>
+  // Mobile navigation toggle
+  (function () {
+    var btn = document.getElementById('hamburger');
+    var menu = document.getElementById('navMobile');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function () {
+      var open = menu.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    // Close on nav link click
+    menu.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () {
+        menu.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
