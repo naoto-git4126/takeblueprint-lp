@@ -8,8 +8,8 @@
   <meta name="robots" content="index, follow">
   <!-- Security: CSP via meta tag (HTTP header not available on GitHub Pages) -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; font-src https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'self'; frame-ancestors 'none';">
-  <meta name="referrer" content="no-referrer-when-downgrade">
+        content="default-src 'none'; font-src https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-src https://docs.google.com; form-action 'none'; base-uri 'self'; frame-ancestors 'none';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <!-- Open Graph -->
   <meta property="og:title" content="Takeblueprint | ITコンサルタント・DX推進支援">
   <meta property="og:description" content="元経済産業省20年・生成AI実践スキル。DX推進・AI活用支援を完全リモートで。">
@@ -438,12 +438,39 @@
     #contact .section-label { color: #93c5fd; }
     #contact .section-title { color: var(--white); }
     #contact .section-desc { color: rgba(255,255,255,0.8); max-width: 480px; margin-left: auto; margin-right: auto; }
+    .contact-form-wrap {
+      max-width: 640px;
+      margin: 0 auto 24px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    }
+    .contact-form-wrap iframe {
+      display: block;
+      width: 100%;
+      border: none;
+    }
+    .contact-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 640px;
+      margin: 0 auto 20px;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.8rem;
+    }
+    .contact-divider::before,
+    .contact-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.2);
+    }
     .contact-options {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 16px;
-      margin-top: 8px;
     }
     .contact-btn-primary {
       display: inline-flex;
@@ -744,10 +771,24 @@
       「どんな相談か分からない」「まずは話だけ聞いてほしい」でも大歓迎です。<br>
       お気軽にご連絡ください。
     </p>
+
+    <!-- Google Forms embed: FORM_URL を取得後、src の YOUR_FORM_ID を差し替える -->
+    <!-- 差し替え手順: docs/28_lp_deploy.md の「Google Forms 埋め込み手順」参照 -->
+    <div class="contact-form-wrap">
+      <iframe
+        src="https://docs.google.com/forms/d/e/1FAIpQLSd8wZtL8y3pPVk6l2ayBhz7JS0c321wWXmls-brccDpku6D9g/viewform?embedded=true"
+        height="560"
+        title="お問い合わせフォーム"
+        loading="lazy"
+        sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+        referrerpolicy="no-referrer">
+        フォームを読み込み中です…
+      </iframe>
+    </div>
+
+    <div class="contact-divider">またはSNSから</div>
+
     <div class="contact-options">
-      <a href="mailto:info@takeblueprint.com" class="contact-btn-primary">
-        ✉ メールで相談する
-      </a>
       <a href="https://x.com/takeblueprint" target="_blank" rel="noopener noreferrer" class="contact-btn-secondary">
         𝕏 DM で相談する
       </a>
@@ -760,9 +801,6 @@
 <footer>
   <div class="container">
     <p>© 2026 Takeblueprint. All rights reserved.</p>
-    <p class="mt-2">
-      <a href="mailto:info@takeblueprint.com">info@takeblueprint.com</a>
-    </p>
   </div>
 </footer>
 
