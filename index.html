@@ -8,7 +8,7 @@
   <meta name="robots" content="index, follow">
   <!-- Security: CSP via meta tag (HTTP header not available on GitHub Pages) -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; font-src https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-src https://docs.google.com; form-action 'none'; base-uri 'self'; frame-ancestors 'none';">
+        content="default-src 'none'; font-src https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'self'; frame-ancestors 'none';">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <!-- Open Graph -->
   <meta property="og:title" content="Takeblueprint | ITコンサルタント・DX推進支援">
@@ -444,11 +444,92 @@
       border-radius: var(--radius);
       overflow: hidden;
       box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 28px 24px;
+      text-align: left;
     }
-    .contact-form-wrap iframe {
+    .cf-sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border: 0;
+    }
+    .cf-field { margin-bottom: 18px; }
+    .cf-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 6px;
+    }
+    .cf-req {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--blue-dark);
+      background: #93c5fd;
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-left: 6px;
+      vertical-align: 1px;
+    }
+    .cf-input,
+    .cf-select,
+    .cf-textarea {
       display: block;
       width: 100%;
-      border: none;
+      font-family: inherit;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--slate-dark);
+      background: var(--white);
+      border: 1px solid rgba(15,23,42,0.15);
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-sizing: border-box;
+    }
+    .cf-textarea { resize: vertical; min-height: 140px; }
+    .cf-input:focus,
+    .cf-select:focus,
+    .cf-textarea:focus {
+      outline: 3px solid #93c5fd;
+      outline-offset: 1px;
+    }
+    .cf-hint {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.65);
+    }
+    .cf-alert {
+      margin: 0 0 16px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fecaca;
+      background: rgba(127,29,29,0.45);
+      border: 1px solid rgba(254,202,202,0.5);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .cf-alert[hidden] { display: none; }
+    .cf-alert-notice {
+      font-weight: 400;
+      color: rgba(255,255,255,0.9);
+      background: rgba(30,58,138,0.5);
+      border-color: rgba(147,197,253,0.5);
+    }
+    .cf-actions { text-align: center; margin-top: 22px; }
+    .cf-note {
+      margin-top: 14px;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.65);
+      text-align: center;
     }
     .contact-divider {
       display: flex;
@@ -764,18 +845,46 @@
       お気軽にご連絡ください。
     </p>
 
-    <!-- Google Forms embed: FORM_URL を取得後、src の YOUR_FORM_ID を差し替える -->
-    <!-- 差し替え手順: docs/28_lp_deploy.md の「Google Forms 埋め込み手順」参照 -->
-    <div class="contact-form-wrap">
-      <iframe
-        src="https://docs.google.com/forms/d/e/1FAIpQLSd8wZtL8y3pPVk6l2ayBhz7JS0c321wWXmls-brccDpku6D9g/viewform?embedded=true"
-        height="560"
-        title="お問い合わせフォーム"
-        loading="lazy"
-        sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin"
-        referrerpolicy="no-referrer">
-        フォームを読み込み中です…
-      </iframe>
+    <!-- 静的お問い合わせフォーム（外部リソース読込なし・送信はメールアプリ起動） -->
+    <div class="contact-form-wrap" role="group" aria-labelledby="cfHeading">
+      <p id="cfHeading" class="cf-sr-only">お問い合わせフォーム</p>
+
+      <p class="cf-alert" id="cfAlert" role="alert" hidden></p>
+
+      <div class="cf-field">
+        <label class="cf-label" for="cfName">お名前<span class="cf-req">必須</span></label>
+        <input class="cf-input" type="text" id="cfName" maxlength="60"
+               autocomplete="name" placeholder="例）山田 太郎">
+      </div>
+
+      <div class="cf-field">
+        <label class="cf-label" for="cfSlot">ご希望の稼働枠<span class="cf-req">必須</span></label>
+        <select class="cf-select" id="cfSlot">
+          <option value="" selected>選択してください</option>
+          <option value="週3日">週3日</option>
+          <option value="週4日">週4日</option>
+          <option value="週5日">週5日</option>
+          <option value="スポット・単発">スポット・単発</option>
+          <option value="未定・相談したい">未定・相談したい</option>
+        </select>
+      </div>
+
+      <div class="cf-field">
+        <label class="cf-label" for="cfBody">ご相談内容<span class="cf-req">必須</span></label>
+        <textarea class="cf-textarea" id="cfBody" maxlength="400"
+                  placeholder="ご相談の背景・お困りごと・ご希望の開始時期など"></textarea>
+        <p class="cf-hint"><span id="cfCount">0</span>/400 文字</p>
+      </div>
+
+      <div class="cf-actions">
+        <a class="contact-btn-primary" id="cfSend"
+           href="mailto:apply+lp2608@takeblueprint.com">メールアプリで送信</a>
+      </div>
+
+      <p class="cf-note">
+        ボタンを押すと、入力内容が本文に入った状態でお使いのメールアプリが開きます。<br>
+        内容をご確認のうえ、そのまま送信してください。
+      </p>
     </div>
 
     <div class="contact-divider">またはSNSから</div>
@@ -813,6 +922,114 @@
         btn.setAttribute('aria-expanded', 'false');
       });
     });
+  })();
+
+  // Contact form: compose a mailto: URL from the entered values.
+  // The destination address lives only in the anchor's href (never rendered as text),
+  // and without JavaScript the anchor still opens a blank mail to the same address.
+  (function () {
+    var nameEl = document.getElementById('cfName');
+    var slotEl = document.getElementById('cfSlot');
+    var bodyEl = document.getElementById('cfBody');
+    var sendEl = document.getElementById('cfSend');
+    var alertEl = document.getElementById('cfAlert');
+    var countEl = document.getElementById('cfCount');
+    if (!nameEl || !slotEl || !bodyEl || !sendEl || !alertEl) return;
+
+    var BASE_HREF = sendEl.getAttribute('href');
+    // Some platforms (notably Windows) truncate mailto: URLs beyond ~2000 characters.
+    // Japanese characters cost ~10 characters each once percent-encoded, so warn early.
+    // Truncation is visible in the mail app before sending, so this warns without blocking.
+    var URL_WARN_LIMIT = 1800;
+
+    function crlf(text) {
+      return text.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
+    }
+
+    function buildHref() {
+      var name = nameEl.value.trim();
+      var slot = slotEl.value;
+      var body = bodyEl.value.trim();
+      if (!name && !slot && !body) return BASE_HREF;
+      var subject = 'お問い合わせ' + (name ? '（' + name + ' 様）' : '');
+      var lines = [
+        'お名前: ' + name,
+        'ご希望の稼働枠: ' + slot,
+        '',
+        'ご相談内容:',
+        body,
+        '',
+        '---',
+        '送信元: takeblueprint.com お問い合わせフォーム'
+      ];
+      return BASE_HREF +
+        '?subject=' + encodeURIComponent(crlf(subject)) +
+        '&body=' + encodeURIComponent(crlf(lines.join('\n')));
+    }
+
+    var noticeShown = false;
+
+    function showAlert(message, focusEl) {
+      noticeShown = false;
+      alertEl.textContent = message;
+      alertEl.className = 'cf-alert';
+      alertEl.hidden = false;
+      if (focusEl) focusEl.focus();
+    }
+
+    function showNotice(message) {
+      noticeShown = true;
+      alertEl.textContent = message;
+      alertEl.className = 'cf-alert cf-alert-notice';
+      alertEl.hidden = false;
+    }
+
+    function clearAlert() {
+      noticeShown = false;
+      alertEl.hidden = true;
+      alertEl.textContent = '';
+      alertEl.className = 'cf-alert';
+    }
+
+    function sync() {
+      countEl.textContent = String(bodyEl.value.length);
+      var href = buildHref();
+      sendEl.setAttribute('href', href);
+      if (href.length > URL_WARN_LIMIT) {
+        showNotice('本文が長いため、お使いのメールアプリによっては本文が途中で切れる場合があります。メールアプリが開いたら本文をご確認ください。');
+      } else if (noticeShown) {
+        clearAlert();
+      }
+    }
+
+    [nameEl, slotEl, bodyEl].forEach(function (el) {
+      el.addEventListener('input', function () {
+        if (!noticeShown) clearAlert();
+        sync();
+      });
+      el.addEventListener('change', sync);
+    });
+
+    sendEl.addEventListener('click', function (e) {
+      if (!nameEl.value.trim()) {
+        e.preventDefault();
+        showAlert('お名前を入力してください。', nameEl);
+        return;
+      }
+      if (!slotEl.value) {
+        e.preventDefault();
+        showAlert('ご希望の稼働枠を選択してください。', slotEl);
+        return;
+      }
+      if (!bodyEl.value.trim()) {
+        e.preventDefault();
+        showAlert('ご相談内容を入力してください。', bodyEl);
+        return;
+      }
+      sync();
+    });
+
+    sync();
   })();
 </script>
 
