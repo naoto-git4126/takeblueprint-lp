@@ -531,6 +531,53 @@
       color: rgba(255,255,255,0.65);
       text-align: center;
     }
+    .cf-fallback-toggle { margin-top: 10px; text-align: center; }
+    .cf-fallback-toggle button {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.55);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .cf-fallback-toggle button:hover { color: rgba(255,255,255,0.85); }
+    .cf-fallback {
+      max-width: 640px;
+      margin: 14px auto 0;
+      padding: 14px 16px;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: var(--radius);
+    }
+    .cf-fallback[hidden] { display: none; }
+    .cf-fallback-addr {
+      margin: 10px 0;
+      padding: 8px 12px;
+      font-family: Consolas, Menlo, monospace;
+      font-size: 0.9rem;
+      color: #fff;
+      background: rgba(0,0,0,0.25);
+      border-radius: 6px;
+      text-align: center;
+      user-select: all;
+      word-break: break-all;
+    }
+    .cf-fallback-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .cf-copy-btn {
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      color: #fff;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .cf-copy-btn:hover { background: rgba(255,255,255,0.22); }
+    .cf-fallback-hint { margin: 8px 0 0; min-height: 1.2em; font-size: 0.75rem; color: rgba(255,255,255,0.7); text-align: center; }
     .contact-divider {
       display: flex;
       align-items: center;
@@ -885,6 +932,26 @@
         ボタンを押すと、入力内容が本文に入った状態でお使いのメールアプリが開きます。<br>
         内容をご確認のうえ、そのまま送信してください。
       </p>
+
+      <p class="cf-fallback-toggle">
+        <button type="button" id="cfFallbackToggle" aria-expanded="false" aria-controls="cfFallback">メールアプリが開かない場合はこちら</button>
+      </p>
+      <div class="cf-fallback" id="cfFallback" hidden>
+        <p>Gmail などの Web メールをお使いの場合は、下記アドレス宛に入力内容を貼り付けてお送りください。</p>
+        <p class="cf-fallback-addr" id="cfFallbackAddr" aria-label="送信先メールアドレス"></p>
+        <div class="cf-fallback-actions">
+          <button type="button" class="cf-copy-btn" id="cfCopyAddr">アドレスをコピー</button>
+          <button type="button" class="cf-copy-btn" id="cfCopyBody">入力内容をコピー</button>
+        </div>
+        <p class="cf-fallback-hint" id="cfCopyHint" role="status" aria-live="polite"></p>
+      </div>
+
+      <noscript>
+        <p class="cf-note">
+          JavaScript が無効のため、入力内容は自動でメールに反映されません。<br>
+          上の「メールアプリで送信」ボタンからメールを開き、お名前・ご希望の稼働枠・ご相談内容を本文にご記入ください。
+        </p>
+      </noscript>
     </div>
 
     <div class="contact-divider">またはSNSから</div>
@@ -1009,6 +1076,70 @@
       });
       el.addEventListener('change', sync);
     });
+
+    // Fallback for environments without a configured mail app (e.g. webmail users).
+    // The address is derived from the anchor's href at runtime — the href stays the
+    // single source of truth for tag rotation (nothing new to update on rotation).
+    (function () {
+      var fbToggle = document.getElementById('cfFallbackToggle');
+      var fbBox = document.getElementById('cfFallback');
+      var fbAddr = document.getElementById('cfFallbackAddr');
+      var copyAddrBtn = document.getElementById('cfCopyAddr');
+      var copyBodyBtn = document.getElementById('cfCopyBody');
+      var copyHint = document.getElementById('cfCopyHint');
+      if (!fbToggle || !fbBox || !fbAddr || !copyAddrBtn || !copyBodyBtn || !copyHint) return;
+      var ADDRESS = BASE_HREF.replace(/^mailto:/, '');
+
+      function plainMessage() {
+        var name = nameEl.value.trim();
+        return [
+          '件名: お問い合わせ' + (name ? '（' + name + ' 様）' : ''),
+          'お名前: ' + name,
+          'ご希望の稼働枠: ' + slotEl.value,
+          '',
+          'ご相談内容:',
+          bodyEl.value.trim(),
+          '',
+          '---',
+          '送信元: takeblueprint.com お問い合わせフォーム'
+        ].join('\n');
+      }
+
+      function copyText(text, label) {
+        function done(ok) {
+          copyHint.textContent = ok
+            ? label + 'をコピーしました。'
+            : 'コピーできませんでした。お手数ですが、上のアドレスを選択して手動でコピーしてください。';
+        }
+        function legacy() {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          var ok = false;
+          try { ok = document.execCommand('copy'); } catch (err) {}
+          document.body.removeChild(ta);
+          done(ok);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { done(true); }, legacy);
+        } else {
+          legacy();
+        }
+      }
+
+      fbToggle.addEventListener('click', function () {
+        var opening = fbBox.hidden;
+        fbBox.hidden = !opening;
+        fbToggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
+        if (opening) fbAddr.textContent = ADDRESS;
+      });
+      copyAddrBtn.addEventListener('click', function () { copyText(ADDRESS, 'アドレス'); });
+      copyBodyBtn.addEventListener('click', function () { copyText(plainMessage(), '入力内容'); });
+    })();
 
     sendEl.addEventListener('click', function (e) {
       if (!nameEl.value.trim()) {
