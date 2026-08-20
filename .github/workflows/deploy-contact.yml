@@ -6,8 +6,7 @@ name: deploy-contact
 
 on:
   push:
-    # poc/post-form は PoC 検証用の一時トリガー（本切替マージ前にこの行を外す）
-    branches: [main, poc/post-form]
+    branches: [main]
     paths: ["functions/**", ".github/workflows/deploy-contact.yml"]
   workflow_dispatch:
 
