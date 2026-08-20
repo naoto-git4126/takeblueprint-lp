@@ -1,0 +1,11 @@
+{
+  "name": "takeblueprint-contact",
+  "private": true,
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}
