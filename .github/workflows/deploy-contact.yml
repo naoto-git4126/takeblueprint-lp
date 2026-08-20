@@ -33,6 +33,7 @@ jobs:
             --region=asia-northeast1 \
             --source=functions \
             --function=contact \
+            --service-account=contact-runtime@takeblueprint-web.iam.gserviceaccount.com \
             --allow-unauthenticated \
             --max-instances=2 \
             --quiet
