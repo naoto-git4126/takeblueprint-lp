@@ -1,12 +1,14 @@
 "use strict";
 
-const { onRequest } = require("firebase-functions/v2/https");
-const { defineString } = require("firebase-functions/params");
+const functions = require("@google-cloud/functions-framework");
 const { GoogleAuth } = require("google-auth-library");
 
-const SENDER_USER = defineString("SENDER_USER");
-const FORWARD_ADDRESS = defineString("FORWARD_ADDRESS");
+// 環境変数（Cloud Run サービスに設定・デプロイ間で引き継がれる。README 参照）:
+//   SENDER_USER     転送メールの送信名義となる Workspace ユーザー（DWD で偽装）
+//   FORWARD_ADDRESS 内部転送の宛先 apply+<現行タグ>@takeblueprint.com
+//   THANKS_URL      送信完了ページ（省略時 https://takeblueprint.com/thanks.html）
 
+const ALLOWED_ORIGINS = new Set(["https://takeblueprint.com"]);
 const SLOTS = new Set(["週3日", "週4日", "週5日", "スポット・単発", "未定・相談したい"]);
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -101,53 +103,62 @@ function buildMime(v, sender, forward) {
   return Buffer.from(mime, "utf8").toString("base64url");
 }
 
-exports.contact = onRequest(
-  { region: "asia-northeast1", maxInstances: 2, cors: false },
-  async (req, res) => {
-    if (req.method !== "POST") {
-      res.status(405).send("Method Not Allowed");
-      return;
-    }
-    const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || "?";
-    if (rateLimited(ip)) {
-      console.log("contact: rate-limited");
-      res.status(429).send("送信回数が多すぎます。しばらく経ってからお試しください。");
-      return;
-    }
-    const v = validate(req.body || {});
-    if (!v.ok) {
-      // 統治要件（GOV-0004）: 入力値はログに残さない。理由コードのみ
-      console.log(`contact: rejected (${v.reason})`);
-      if (v.reason === "honeypot") {
-        res.redirect(303, "/thanks.html");
-        return;
-      }
-      res.status(400).send("入力内容をご確認ください（未入力または形式エラーの項目があります）。");
-      return;
-    }
-    try {
-      const sender = SENDER_USER.value();
-      const forward = FORWARD_ADDRESS.value();
-      const token = await getGmailToken(sender);
-      const sendRes = await fetch(
-        `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(sender)}/messages/send`,
-        {
-          method: "POST",
-          headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-          body: JSON.stringify({ raw: buildMime(v, sender, forward) }),
-        }
-      );
-      if (!sendRes.ok) throw new Error(`gmail send failed: ${sendRes.status}`);
-      console.log("contact: forwarded");
-      res.redirect(303, "/thanks.html");
-    } catch (err) {
-      // ログは固定コードのみ（GOV-0004）。自前 throw の固定文言だけ通し、
-      // ライブラリ内部例外は err.name に丸めて想定外の詳細が混入する芽を摘む
-      const known = /^(token exchange failed|gmail send failed): \d+$/.test(err?.message || "");
-      console.error(`contact: error (${known ? err.message : err?.name || "internal_error"})`);
-      res
-        .status(500)
-        .send("送信処理でエラーが発生しました。お手数ですが、時間をおいて再度お試しください。");
-    }
+functions.http("contact", async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).send("Method Not Allowed");
+    return;
   }
-);
+  // 自サイト外からの直接 POST の一次フィルタ（Origin を送らない旧環境・curl は通し、
+  // 偽 Origin 明示のみ弾く。最終防壁は honeypot＋検証＋レート制限）
+  const origin = req.headers.origin;
+  if (origin && !ALLOWED_ORIGINS.has(origin)) {
+    console.log("contact: rejected (origin)");
+    res.status(403).send("Forbidden");
+    return;
+  }
+  const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || "?";
+  if (rateLimited(ip)) {
+    console.log("contact: rate-limited");
+    res.status(429).send("送信回数が多すぎます。しばらく経ってからお試しください。");
+    return;
+  }
+  const v = validate(req.body || {});
+  const thanksUrl = process.env.THANKS_URL || "https://takeblueprint.com/thanks.html";
+  if (!v.ok) {
+    // 統治要件（GOV-0004）: 入力値はログに残さない。理由コードのみ
+    console.log(`contact: rejected (${v.reason})`);
+    if (v.reason === "honeypot") {
+      res.redirect(303, thanksUrl);
+      return;
+    }
+    res.status(400).send("入力内容をご確認ください（未入力または形式エラーの項目があります）。");
+    return;
+  }
+  try {
+    const sender = process.env.SENDER_USER;
+    const forward = process.env.FORWARD_ADDRESS;
+    if (!sender || !forward) throw new Error("config missing: 0");
+    const token = await getGmailToken(sender);
+    const sendRes = await fetch(
+      `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(sender)}/messages/send`,
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ raw: buildMime(v, sender, forward) }),
+      }
+    );
+    if (!sendRes.ok) throw new Error(`gmail send failed: ${sendRes.status}`);
+    console.log("contact: forwarded");
+    res.redirect(303, thanksUrl);
+  } catch (err) {
+    // ログは固定コードのみ（GOV-0004）。自前 throw の固定文言だけ通し、
+    // ライブラリ内部例外は err.name に丸めて想定外の詳細が混入する芽を摘む
+    const known = /^(token exchange failed|gmail send failed|config missing): \d+$/.test(
+      err?.message || ""
+    );
+    console.error(`contact: error (${known ? err.message : err?.name || "internal_error"})`);
+    res
+      .status(500)
+      .send("送信処理でエラーが発生しました。お手数ですが、時間をおいて再度お試しください。");
+  }
+});
