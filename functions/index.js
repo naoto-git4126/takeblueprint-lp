@@ -1,16 +1,18 @@
 "use strict";
 
-const functions = require("@google-cloud/functions-framework");
-const { GoogleAuth } = require("google-auth-library");
+// LP フォーム受け口（Cloud Run・依存パッケージゼロ）
+// 自作原則（Plan B ADR-0007 §3: 言語標準機能の水準）に従い Node 標準 + fetch のみで実装。
+// 環境変数: SENDER_USER / FORWARD_ADDRESS / THANKS_URL（README 参照）
 
-// 環境変数（Cloud Run サービスに設定・デプロイ間で引き継がれる。README 参照）:
-//   SENDER_USER     転送メールの送信名義となる Workspace ユーザー（DWD で偽装）
-//   FORWARD_ADDRESS 内部転送の宛先 apply+<現行タグ>@takeblueprint.com
-//   THANKS_URL      送信完了ページ（省略時 https://takeblueprint.com/thanks.html）
+const http = require("http");
+const { URLSearchParams } = require("url");
 
+const PORT = process.env.PORT || 8080;
 const ALLOWED_ORIGINS = new Set(["https://takeblueprint.com"]);
 const SLOTS = new Set(["週3日", "週4日", "週5日", "スポット・単発", "未定・相談したい"]);
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]+\.[^\s@]{2,}$/;
+const MAX_BODY_BYTES = 32 * 1024;
+const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default";
 
 // ベストエフォートのレート制限（インスタンス内メモリ・10分5回）
 const hits = new Map();
@@ -25,11 +27,11 @@ function rateLimited(ip) {
 }
 
 function validate(body) {
-  const name = String(body.name || "").trim();
-  const slot = String(body.slot || "");
-  const text = String(body.body || "").trim();
-  const replyTo = String(body.reply_to || "").trim();
-  const honeypot = String(body.website || "");
+  const name = String(body.get("name") || "").trim();
+  const slot = String(body.get("slot") || "");
+  const text = String(body.get("body") || "").trim();
+  const replyTo = String(body.get("reply_to") || "").trim();
+  const honeypot = String(body.get("website") || "");
   if (honeypot !== "") return { ok: false, reason: "honeypot" };
   if (!name || name.length > 60) return { ok: false, reason: "name" };
   if (!SLOTS.has(slot)) return { ok: false, reason: "slot" };
@@ -38,12 +40,17 @@ function validate(body) {
   return { ok: true, name, slot, text, replyTo };
 }
 
-// 鍵ファイルなしの DWD: 実行 SA が signJwt で自身の assertion に署名し、
+async function metadata(path) {
+  const res = await fetch(`${METADATA}${path}`, { headers: { "Metadata-Flavor": "Google" } });
+  if (!res.ok) throw new Error(`metadata failed: ${res.status}`);
+  return res;
+}
+
+// 鍵ファイルなしの DWD: 実行 SA が IAM signJwt で自身の assertion に署名し、
 // SENDER_USER として gmail.send のアクセストークンを得る（詳細は README）
 async function getGmailToken(subject) {
-  const auth = new GoogleAuth({ scopes: ["https://www.googleapis.com/auth/cloud-platform"] });
-  const { client_email: saEmail } = await auth.getCredentials();
-  const client = await auth.getClient();
+  const saEmail = await (await metadata("/email")).text();
+  const saToken = (await (await metadata("/token")).json()).access_token;
   const now = Math.floor(Date.now() / 1000);
   const payload = JSON.stringify({
     iss: saEmail,
@@ -53,17 +60,22 @@ async function getGmailToken(subject) {
     iat: now,
     exp: now + 600,
   });
-  const signRes = await client.request({
-    url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${saEmail}:signJwt`,
-    method: "POST",
-    data: { payload },
-  });
+  const signRes = await fetch(
+    `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${saEmail}:signJwt`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${saToken}`, "content-type": "application/json" },
+      body: JSON.stringify({ payload }),
+    }
+  );
+  if (!signRes.ok) throw new Error(`signJwt failed: ${signRes.status}`);
+  const { signedJwt } = await signRes.json();
   const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: signRes.data.signedJwt,
+      assertion: signedJwt,
     }),
   });
   if (!tokenRes.ok) throw new Error(`token exchange failed: ${tokenRes.status}`);
@@ -103,9 +115,39 @@ function buildMime(v, sender, forward) {
   return Buffer.from(mime, "utf8").toString("base64url");
 }
 
-functions.http("contact", async (req, res) => {
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    req.on("data", (c) => {
+      size += c.length;
+      if (size > MAX_BODY_BYTES) {
+        reject(new Error("body too large: 0"));
+        req.destroy();
+        return;
+      }
+      chunks.push(c);
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    req.on("error", reject);
+  });
+}
+
+// Connection: close を常時付与——ボディ未読のまま応答するパス（405/403/429）で
+// keep-alive ソケットが再利用されると次リクエストがリセットされるため
+function send(res, status, text) {
+  res.writeHead(status, { "content-type": "text/plain; charset=utf-8", connection: "close" });
+  res.end(text);
+}
+
+function redirect(res, url) {
+  res.writeHead(303, { location: url, connection: "close" });
+  res.end();
+}
+
+const server = http.createServer(async (req, res) => {
   if (req.method !== "POST") {
-    res.status(405).send("Method Not Allowed");
+    send(res, 405, "Method Not Allowed");
     return;
   }
   // 自サイト外からの直接 POST の一次フィルタ（Origin を送らない旧環境・curl は通し、
@@ -113,28 +155,32 @@ functions.http("contact", async (req, res) => {
   const origin = req.headers.origin;
   if (origin && !ALLOWED_ORIGINS.has(origin)) {
     console.log("contact: rejected (origin)");
-    res.status(403).send("Forbidden");
+    send(res, 403, "Forbidden");
     return;
   }
-  const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || "?";
+  const ip =
+    String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
+    req.socket.remoteAddress ||
+    "?";
   if (rateLimited(ip)) {
     console.log("contact: rate-limited");
-    res.status(429).send("送信回数が多すぎます。しばらく経ってからお試しください。");
+    send(res, 429, "送信回数が多すぎます。しばらく経ってからお試しください。");
     return;
   }
-  const v = validate(req.body || {});
   const thanksUrl = process.env.THANKS_URL || "https://takeblueprint.com/thanks.html";
-  if (!v.ok) {
-    // 統治要件（GOV-0004）: 入力値はログに残さない。理由コードのみ
-    console.log(`contact: rejected (${v.reason})`);
-    if (v.reason === "honeypot") {
-      res.redirect(303, thanksUrl);
+  try {
+    const raw = await readBody(req);
+    const v = validate(new URLSearchParams(raw));
+    if (!v.ok) {
+      // 統治要件（GOV-0004）: 入力値はログに残さない。理由コードのみ
+      console.log(`contact: rejected (${v.reason})`);
+      if (v.reason === "honeypot") {
+        redirect(res, thanksUrl);
+        return;
+      }
+      send(res, 400, "入力内容をご確認ください（未入力または形式エラーの項目があります）。");
       return;
     }
-    res.status(400).send("入力内容をご確認ください（未入力または形式エラーの項目があります）。");
-    return;
-  }
-  try {
     const sender = process.env.SENDER_USER;
     const forward = process.env.FORWARD_ADDRESS;
     if (!sender || !forward) throw new Error("config missing: 0");
@@ -149,16 +195,16 @@ functions.http("contact", async (req, res) => {
     );
     if (!sendRes.ok) throw new Error(`gmail send failed: ${sendRes.status}`);
     console.log("contact: forwarded");
-    res.redirect(303, thanksUrl);
+    redirect(res, thanksUrl);
   } catch (err) {
     // ログは固定コードのみ（GOV-0004）。自前 throw の固定文言だけ通し、
-    // ライブラリ内部例外は err.name に丸めて想定外の詳細が混入する芽を摘む
-    const known = /^(token exchange failed|gmail send failed|config missing): \d+$/.test(
+    // 想定外の例外は err.name に丸めて詳細が混入する芽を摘む
+    const known = /^(signJwt failed|token exchange failed|gmail send failed|config missing|body too large|metadata failed): \d+$/.test(
       err?.message || ""
     );
     console.error(`contact: error (${known ? err.message : err?.name || "internal_error"})`);
-    res
-      .status(500)
-      .send("送信処理でエラーが発生しました。お手数ですが、時間をおいて再度お試しください。");
+    send(res, 500, "送信処理でエラーが発生しました。お手数ですが、時間をおいて再度お試しください。");
   }
 });
+
+server.listen(PORT, () => console.log(`contact: listening on ${PORT}`));

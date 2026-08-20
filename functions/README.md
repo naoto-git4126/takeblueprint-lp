@@ -1,9 +1,11 @@
-# contact — LP フォーム受け口（Cloud Run・案A''）
+# contact — LP フォーム受け口（Cloud Run・案A''・依存パッケージゼロ）
 
 フォーム POST を検証し、内部転送メール（apply+タグ@）として受信箱へ送る Cloud Run サービス。
 既存パイプライン（受信箱→mail_bridge→intake）は無改修で流用する（Phase 1 設計）。
 Firebase は使わない（2026-08-20 案A'' 採用——ホスティングは GitHub Pages のまま・
 フォームの action がこのサービスの run.app URL を直接指す）。
+**npm 依存ゼロ**: Node 標準の http と fetch のみ（自作原則= Plan B ADR-0007 §3「言語標準機能の水準」準拠。
+トークン取得はメタデータサーバ直叩き・署名は IAM signJwt——ライブラリ不要）。
 
 ## 環境変数（Cloud Run サービスに一度設定・以後のデプロイに引き継がれる）
 
@@ -43,7 +45,7 @@ Workload Identity Federation（このリポの main に限定）。ローカル 
 ## ローカル動作確認
 
 ```
-cd functions && npm install && npm start   # http://localhost:8080/
+cd functions && node index.js              # http://localhost:8080/（install 不要）
 curl -i -X POST localhost:8080 -d "name=x"                # → 400（検証）
 curl -i -X POST localhost:8080 -d "website=bot"           # → 303（honeypot 吸収）
 ```

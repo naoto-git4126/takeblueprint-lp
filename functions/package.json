@@ -6,13 +6,6 @@
   },
   "main": "index.js",
   "scripts": {
-    "start": "functions-framework --target=contact --port=8080"
-  },
-  "dependencies": {
-    "@google-cloud/functions-framework": "^3.4.0",
-    "google-auth-library": "^9.14.0"
-  },
-  "overrides": {
-    "uuid": "^11.1.1"
+    "start": "node index.js"
   }
 }
