@@ -141,7 +141,10 @@ exports.contact = onRequest(
       console.log("contact: forwarded");
       res.redirect(303, "/thanks.html");
     } catch (err) {
-      console.error(`contact: error (${err.message})`);
+      // ログは固定コードのみ（GOV-0004）。自前 throw の固定文言だけ通し、
+      // ライブラリ内部例外は err.name に丸めて想定外の詳細が混入する芽を摘む
+      const known = /^(token exchange failed|gmail send failed): \d+$/.test(err?.message || "");
+      console.error(`contact: error (${known ? err.message : err?.name || "internal_error"})`);
       res
         .status(500)
         .send("送信処理でエラーが発生しました。お手数ですが、時間をおいて再度お試しください。");
