@@ -1,0 +1,12 @@
+{
+  "name": "takeblueprint-contact",
+  "private": true,
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-functions": "^6.1.0",
+    "google-auth-library": "^9.14.0"
+  }
+}

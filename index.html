@@ -8,7 +8,7 @@
   <meta name="robots" content="index, follow">
   <!-- Security: CSP via meta tag (HTTP header not available on GitHub Pages) -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; font-src https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'self'; frame-ancestors 'none';">
+        content="default-src 'none'; font-src https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-src 'none'; form-action 'self'; base-uri 'self'; frame-ancestors 'none';">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <!-- Open Graph -->
   <meta property="og:title" content="Takeblueprint | ITコンサルタント・DX推進支援">
@@ -606,6 +606,9 @@
       gap: 8px;
       font-size: 1rem;
       font-weight: 700;
+      font-family: inherit;
+      border: none;
+      cursor: pointer;
       background: var(--white);
       color: var(--blue-main);
       padding: 14px 32px;
@@ -892,21 +895,28 @@
       お気軽にご連絡ください。
     </p>
 
-    <!-- 静的お問い合わせフォーム（外部リソース読込なし・送信はメールアプリ起動） -->
-    <div class="contact-form-wrap" role="group" aria-labelledby="cfHeading">
+    <!-- お問い合わせフォーム（同一ドメイン /api/contact へ POST・外部リソース読込なし） -->
+    <form class="contact-form-wrap" id="cfForm" method="post" action="/api/contact" aria-labelledby="cfHeading">
       <p id="cfHeading" class="cf-sr-only">お問い合わせフォーム</p>
 
       <p class="cf-alert" id="cfAlert" role="alert" hidden></p>
 
       <div class="cf-field">
         <label class="cf-label" for="cfName">お名前<span class="cf-req">必須</span></label>
-        <input class="cf-input" type="text" id="cfName" maxlength="60"
+        <input class="cf-input" type="text" id="cfName" name="name" maxlength="60" required
                autocomplete="name" placeholder="例）山田 太郎">
       </div>
 
       <div class="cf-field">
+        <label class="cf-label" for="cfEmail">ご連絡先メールアドレス<span class="cf-req">必須</span></label>
+        <input class="cf-input" type="email" id="cfEmail" name="reply_to" maxlength="254" required
+               autocomplete="email" inputmode="email" placeholder="例）taro@example.com">
+        <p class="cf-hint">ご返信のために使用します。</p>
+      </div>
+
+      <div class="cf-field">
         <label class="cf-label" for="cfSlot">ご希望の稼働枠<span class="cf-req">必須</span></label>
-        <select class="cf-select" id="cfSlot">
+        <select class="cf-select" id="cfSlot" name="slot" required>
           <option value="" selected>選択してください</option>
           <option value="週3日">週3日</option>
           <option value="週4日">週4日</option>
@@ -918,19 +928,26 @@
 
       <div class="cf-field">
         <label class="cf-label" for="cfBody">ご相談内容<span class="cf-req">必須</span></label>
-        <textarea class="cf-textarea" id="cfBody" maxlength="400"
+        <textarea class="cf-textarea" id="cfBody" name="body" maxlength="400" required
                   placeholder="ご相談の背景・お困りごと・ご希望の開始時期など"></textarea>
         <p class="cf-hint"><span id="cfCount">0</span>/400 文字</p>
       </div>
 
+      <!-- スパムボット対策のダミー欄（人間には見えない・入力があれば破棄） -->
+      <div aria-hidden="true" style="position:absolute; left:-9999px; height:0; overflow:hidden;">
+        <label for="cfWebsite">Website</label>
+        <input type="text" id="cfWebsite" name="website" tabindex="-1" autocomplete="off">
+      </div>
+
       <div class="cf-actions">
-        <a class="contact-btn-primary" id="cfSend"
-           href="mailto:apply+lp2608@takeblueprint.com">メールアプリで送信</a>
+        <button type="submit" class="contact-btn-primary" id="cfSubmit">送信する</button>
       </div>
 
       <p class="cf-note">
-        ボタンを押すと、入力内容が本文に入った状態でお使いのメールアプリが開きます。<br>
-        内容をご確認のうえ、そのまま送信してください。
+        送信ボタンで、このままお問い合わせが送信されます。<br>
+        メールアプリからの送信をご希望の場合は
+        <a id="cfSend" style="color:#93c5fd;"
+           href="mailto:apply+lp2608@takeblueprint.com">こちら</a>（入力内容が本文に入った状態で開きます）。
       </p>
 
       <p class="cf-fallback-toggle">
@@ -948,11 +965,11 @@
 
       <noscript>
         <p class="cf-note">
-          JavaScript が無効のため、入力内容は自動でメールに反映されません。<br>
-          上の「メールアプリで送信」ボタンからメールを開き、お名前・ご希望の稼働枠・ご相談内容を本文にご記入ください。
+          このフォームは JavaScript が無効でもそのまま送信できます。<br>
+          メールアプリから送る場合は、お名前・ご連絡先・ご希望の稼働枠・ご相談内容を本文にご記入ください。
         </p>
       </noscript>
-    </div>
+    </form>
 
     <div class="contact-divider">またはSNSから</div>
 
@@ -996,6 +1013,7 @@
   // and without JavaScript the anchor still opens a blank mail to the same address.
   (function () {
     var nameEl = document.getElementById('cfName');
+    var emailEl = document.getElementById('cfEmail');
     var slotEl = document.getElementById('cfSlot');
     var bodyEl = document.getElementById('cfBody');
     var sendEl = document.getElementById('cfSend');
@@ -1022,6 +1040,7 @@
       var lines = [
         'お名前: ' + name,
         'ご希望の稼働枠: ' + slot,
+        'ご連絡先メールアドレス: ' + (emailEl ? emailEl.value.trim() : ''),
         '',
         'ご相談内容:',
         body,
@@ -1069,13 +1088,24 @@
       }
     }
 
-    [nameEl, slotEl, bodyEl].forEach(function (el) {
+    [nameEl, emailEl, slotEl, bodyEl].forEach(function (el) {
+      if (!el) return;
       el.addEventListener('input', function () {
         if (!noticeShown) clearAlert();
         sync();
       });
       el.addEventListener('change', sync);
     });
+
+    // Double-submit guard for the POST form.
+    var formEl = document.getElementById('cfForm');
+    var submitEl = document.getElementById('cfSubmit');
+    if (formEl && submitEl) {
+      formEl.addEventListener('submit', function () {
+        submitEl.disabled = true;
+        submitEl.textContent = '送信中…';
+      });
+    }
 
     // Fallback for environments without a configured mail app (e.g. webmail users).
     // The address is derived from the anchor's href at runtime — the href stays the
@@ -1096,6 +1126,7 @@
           '件名: お問い合わせ' + (name ? '（' + name + ' 様）' : ''),
           'お名前: ' + name,
           'ご希望の稼働枠: ' + slotEl.value,
+          'ご連絡先メールアドレス: ' + (emailEl ? emailEl.value.trim() : ''),
           '',
           'ご相談内容:',
           bodyEl.value.trim(),
